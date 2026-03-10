@@ -13,7 +13,7 @@ for port in range(start_port, end_port + 1):
     # AF_INET → IPv4
     # SOCK_STREAM → TCP
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # to scan IPv6, use AF_INET6, to s an UDP, use SOCK_DGRAM
-    s.settimeout(0.5)
+    s.settimeout(0.01)
 
     result = s.connect_ex((target, port))
 

@@ -1,6 +1,7 @@
+import csv  # 1. Import the csv module
+from dotenv import load_dotenv
 import socket
 import os
-from dotenv import load_dotenv
 
 # Load .env file
 load_dotenv()
@@ -9,24 +10,32 @@ target = os.getenv("TARGET_IP")
 start_port = int(os.getenv("START_PORT"))
 end_port = int(os.getenv("END_PORT"))
 
-open_ports = 0  # counter
+open_ports = 0 
+output_file = "scan_results.csv" # Define your filename
 
 print(f"Scanning {target}...")
 
-for port in range(start_port, end_port + 1):
-    # Create a TCP IPv4 socket for network communication.
-    # AF_INET → IPv4
-    # SOCK_STREAM → TCP
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # to scan IPv6, use AF_INET6, to s an UDP, use SOCK_DGRAM
-    s.settimeout(0.1)
+# 2. Open the file in 'write' mode
+with open(output_file, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    
+    # 3. Write the header row
+    writer.writerow(["IP Address", "Port", "Status"])
 
-    result = s.connect_ex((target, port))
+    for port in range(start_port, end_port + 1):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.1)
 
-    if result == 0:
-        print(f"Port {port} is OPEN")
-        open_ports += 1  # increase counter
+        result = s.connect_ex((target, port))
 
-    s.close()
+        if result == 0:
+            print(f"Port {port} is OPEN")
+            # 4. Write the data row to the CSV
+            writer.writerow([target, port, "OPEN"])
+            open_ports += 1
 
-print("Scan complete.")
+        s.close()
+
+print("-" * 20)
+print(f"Scan complete. Results saved to {output_file}")
 print(f"Total open ports found: {open_ports}")

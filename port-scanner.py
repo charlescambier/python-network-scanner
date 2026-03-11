@@ -1,41 +1,101 @@
-import csv  # 1. Import the csv module
+import csv
 from dotenv import load_dotenv
 import socket
 import os
+import errno
+import ipaddress
 
 # Load .env file
 load_dotenv()
 
-target = os.getenv("TARGET_IP")
+target_ip_start = os.getenv("TARGET_IP_START")
+target_ip_end = os.getenv("TARGET_IP_END")
 start_port = int(os.getenv("START_PORT"))
 end_port = int(os.getenv("END_PORT"))
+time_out_amount = int(os.getenv("TIME_OUT_AMOUNT"))
 
-open_ports = 0 
-output_file = "scan_results.csv" # Define your filename
+open_ports_collection = []
+closed_ports_collection = []
+filtered_port_collection = []
+unknown_collection = []
+output_file = "scan_results.csv"
 
-print(f"Scanning {target}...")
+# Convert IP to String
+start_addr = ipaddress.IPv4Address(target_ip_start)
+end_addr = ipaddress.IPv4Address(target_ip_end)
 
-# 2. Open the file in 'write' mode
+# Generate ip rate
+ip_range = list(ipaddress.summarize_address_range(start_addr, end_addr))
+
+# Calculate total number of IPs for display
+total_ips = sum(network.num_addresses for network in ip_range)
+total_ports = end_port - start_port + 1
+
+print(f"{'='*50}")
+print(f"  Start scan : {target_ip_start} → {target_ip_end}")
+print(f"  Total IPs   : {total_ips}")
+print(f"  Ports        : {start_port} → {end_port} ({total_ports} ports)")
+print(f"{'='*50}")
+
 with open(output_file, mode='w', newline='') as file:
     writer = csv.writer(file)
-    
-    # 3. Write the header row
     writer.writerow(["IP Address", "Port", "Status"])
 
-    for port in range(start_port, end_port + 1):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.1)
+    # Loop through each network/IP in the range
+    for network in ip_range:
+        for ip in network:
+            target = str(ip)
+            print(f"\n[→] Scanning IP: {target}")
 
-        result = s.connect_ex((target, port))
+            for port in range(start_port, end_port + 1):
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.settimeout(time_out_amount)
 
-        if result == 0:
-            print(f"Port {port} is OPEN")
-            # 4. Write the data row to the CSV
-            writer.writerow([target, port, "OPEN"])
-            open_ports += 1
+                result = s.connect_ex((target, port))
+                status = ""
 
-        s.close()
+                if result == 0:
+                    status = "OPEN"
+                    open_ports_collection.append([target, port, status])
+                    print(f"    Port {port}: ✔ OPEN")
 
-print("-" * 20)
-print(f"Scan complete. Results saved to {output_file}")
-print(f"Total open ports found: {open_ports}")
+                if result in (errno.ECONNREFUSED, 111, 10061):
+                    status = "CLOSED"
+                    closed_ports_collection.append([target, port, status])
+                    print(f"    Port {port}: X Closed")
+
+                if result in (errno.ETIMEDOUT, 110, 10060):
+                    status = "FILTERED"
+                    filtered_port_collection.append([target, port, status])
+                    print(f"    Port {port}: ⚠ FILTERED")
+
+                # else:
+                #     status = f"UNKNOWN ({result})"
+                #     unknown_collection.append([target, port, status])
+                #     print(f"    Port {port}: ? {status}")
+                #     pass
+
+                writer.writerow([target, port, status])
+                s.close()
+
+# Final resume
+print(f"\n{'='*50}")
+print(f"  Scan terminé — Résultats sauvegardés : {output_file}")
+print(f"{'='*50}")
+print(f"  ✔ Open     : {len(open_ports_collection)}")
+print(f"  ✘ Closed   : {len(closed_ports_collection)}")
+print(f"  ⚠ Filtered : {len(filtered_port_collection)}")
+print(f"  ? Unknown  : {len(unknown_collection)}")
+print(f"{'='*50}")
+
+if open_ports_collection:
+    print("\n[Open ports detail]")
+    for entry in open_ports_collection:
+        print(f"  {entry[0]}:{entry[1]}")
+
+if filtered_port_collection:
+    print("\n[Filtered ports detail]")
+    for entry in filtered_port_collection:
+        print(f"  {entry[0]}:{entry[1]}")
+
+print("\nDONE")

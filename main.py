@@ -1,0 +1,48 @@
+import csv
+import ipaddress
+from config import load_config
+from utils import is_host_alive, scan_port
+
+def run_scanner():
+    conf = load_config()
+    
+    stats = {"OPEN": [], "CLOSED": [], "FILTERED": []}
+    ip_range = list(ipaddress.summarize_address_range(conf["start_addr"], conf["end_addr"]))
+
+    print(f"{'='*50}\n Démarrage du scan...\n{'='*50}")
+
+    try:
+        with open(conf["output_file"], mode='w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["IP Address", "Port", "Status"])
+
+            for network in ip_range:
+                for ip in network:
+                    target = str(ip)
+                    
+                    if not is_host_alive(target):
+                        print(f"[→] {target} est OFFLINE")
+                        continue
+
+                    print(f"[→] {target} est ONLINE (Scan en cours...)")
+
+                    for port in range(conf["start_port"], conf["end_port"] + 1):
+                        status = scan_port(target, port, conf["timeout"])
+                        
+                        if status in stats:
+                            stats[status].append(f"{target}:{port}")
+                        
+                        writer.writerow([target, port, status])
+                        print(f"    Port {port}: {status}")
+
+    except PermissionError:
+        print("Erreur : Impossible d'écrire dans le fichier CSV.")
+    
+    # Résumé final
+    print(f"\n{'='*50}")
+    print(f"Terminé. Résultats sauvegardés dans {conf['output_file']}")
+    print(f"Ouverts: {len(stats['OPEN'])} | Fermés: {len(stats['CLOSED'])} | Filtrés: {len(stats['FILTERED'])}")
+    print(f"{'='*50}")
+
+if __name__ == "__main__":
+    run_scanner()

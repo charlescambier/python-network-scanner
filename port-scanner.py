@@ -124,12 +124,6 @@ try:
                             filtered_port_collection.append([target, port, status])
                             print(f"    Port {port}: ⚠ FILTERED")
 
-                        # else:
-                        #     status = f"UNKNOWN ({result})"
-                        #     unknown_collection.append([target, port, status])
-                        #     print(f"    Port {port}: ? {status}")
-                        #     pass
-
                         writer.writerow([target, port, status])
                         s.close()
                         

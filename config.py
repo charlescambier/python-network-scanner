@@ -2,7 +2,8 @@ import os
 import ipaddress
 from dotenv import load_dotenv
 
-def load_config():
+
+def load_config() -> dict[str, int | ipaddress.IPv4Address | str]:
     load_dotenv()
     try:
         config = {

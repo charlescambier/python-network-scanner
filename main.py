@@ -2,11 +2,12 @@ import csv
 import ipaddress
 from config import load_config
 from utils import is_host_alive, scan_port
+from typing import Dict, List
 
-def run_scanner():
+def run_scanner() -> None:
     conf = load_config()
     
-    stats = {"OPEN": [], "CLOSED": [], "FILTERED": []}
+    stats: Dict[str, List[str]] = {"OPEN": [], "CLOSED": [], "FILTERED": []}
     ip_range = list(ipaddress.summarize_address_range(conf["start_addr"], conf["end_addr"]))
 
     print(f"{'='*50}\n Démarrage du scan...\n{'='*50}")
@@ -27,7 +28,7 @@ def run_scanner():
                     print(f"[→] {target} est ONLINE (Scan en cours...)")
 
                     for port in range(conf["start_port"], conf["end_port"] + 1):
-                        status = scan_port(target, port, conf["timeout"])
+                        status: str = scan_port(target, port, conf["timeout"])
                         
                         if status in stats:
                             stats[status].append(f"{target}:{port}")

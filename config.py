@@ -1,0 +1,24 @@
+import os
+import ipaddress
+from dotenv import load_dotenv
+
+def load_config():
+    load_dotenv()
+    try:
+        config = {
+            "start_port": int(os.getenv("START_PORT")),
+            "end_port": int(os.getenv("END_PORT")),
+            "timeout": int(os.getenv("TIME_OUT_AMOUNT")),
+            "start_addr": ipaddress.IPv4Address(os.getenv("TARGET_IP_START")),
+            "end_addr": ipaddress.IPv4Address(os.getenv("TARGET_IP_END")),
+            "output_file": "scan_results.csv"
+        }
+
+        if config["start_port"] > config["end_port"]:
+            raise ValueError("Le port de début est supérieur au port de fin.")
+            
+        return config
+
+    except (TypeError, ValueError, ipaddress.AddressValueError) as e:
+        print(f"ERREUR CONFIGURATION : {e}")
+        exit(1)

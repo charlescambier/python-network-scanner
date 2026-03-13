@@ -16,10 +16,10 @@ def load_config() -> dict[str, int | ipaddress.IPv4Address | str]:
         }
 
         if config["start_port"] > config["end_port"]:
-            raise ValueError("Le port de début est supérieur au port de fin.")
+            raise ValueError("START_PORT > END_PORT")
             
         return config
 
     except (TypeError, ValueError, ipaddress.AddressValueError) as e:
-        print(f"ERREUR CONFIGURATION : {e}")
+        print(f" CONFIGURATION ERROR: {e}")
         exit(1)

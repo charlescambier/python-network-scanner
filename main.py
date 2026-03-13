@@ -10,7 +10,7 @@ def run_scanner() -> None:
     stats: Dict[str, List[str]] = {"OPEN": [], "CLOSED": [], "FILTERED": []}
     ip_range = list(ipaddress.summarize_address_range(conf["start_addr"], conf["end_addr"]))
 
-    print(f"{'='*50}\n Démarrage du scan...\n{'='*50}")
+    print(f"{'='*50}\n Scanning...\n{'='*50}")
 
     try:
         with open(conf["output_file"], mode='w', newline='') as file:
@@ -25,7 +25,7 @@ def run_scanner() -> None:
                         print(f"[→] {target} est OFFLINE")
                         continue
 
-                    print(f"[→] {target} est ONLINE (Scan en cours...)")
+                    print(f"[→] {target} is ONLINE (Scanning...)")
 
                     for port in range(conf["start_port"], conf["end_port"] + 1):
                         status: str = scan_port(target, port, conf["timeout"])
@@ -37,13 +37,14 @@ def run_scanner() -> None:
                         print(f"    Port {port}: {status}")
 
     except PermissionError:
-        print("Erreur : Impossible d'écrire dans le fichier CSV.")
+        print("Error : Impossible to write in CSV file.")
     
     # Résumé final
     print(f"\n{'='*50}")
-    print(f"Terminé. Résultats sauvegardés dans {conf['output_file']}")
-    print(f"Ouverts: {len(stats['OPEN'])} | Fermés: {len(stats['CLOSED'])} | Filtrés: {len(stats['FILTERED'])}")
+    print(f"Done. Results saved in {conf['output_file']}")
+    print(f"OPEN: {len(stats['OPEN'])} | CLOSED: {len(stats['CLOSED'])} | FILTERED: {len(stats['FILTERED'])}")
     print(f"{'='*50}")
 
 if __name__ == "__main__":
+    print(f"load config = {load_config()}")
     run_scanner()

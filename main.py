@@ -22,7 +22,7 @@ def run_scanner() -> None:
                     target = str(ip)
                     
                     if not is_host_alive(target):
-                        print(f"[→] {target} est OFFLINE")
+                        print(f"[→] {target} is OFFLINE")
                         continue
 
                     print(f"[→] {target} is ONLINE (Scanning...)")
